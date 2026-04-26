@@ -27,22 +27,16 @@ export const ArticleParamsForm = ({
 	currentState,
 	onApply,
 }: ArticleParamsFormProps) => {
-	const [isOpen, setIsOpen] = useState(false);
-	const [formState, setFormState] = useState<ArticleStateType>(currentState);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [localArticleState, setLocalArticleState] =
+		useState<ArticleStateType>(currentState);
 
 	const asideRef = useRef<HTMLElement>(null);
 	const arrowButtonRef = useRef<HTMLDivElement>(null);
 
-	// При открытии сайдбара синхронизируем локальное состояние с актуальными настройками
-	useEffect(() => {
-		if (isOpen) {
-			setFormState(currentState);
-		}
-	}, [isOpen, currentState]);
-
 	// Закрытие по клику вне сайдбара и кнопки стрелки
 	useEffect(() => {
-		if (!isOpen) return;
+		if (!isSidebarOpen) return;
 
 		const handleClickOutside = (event: MouseEvent) => {
 			const target = event.target as Node;
@@ -52,76 +46,84 @@ export const ArticleParamsForm = ({
 				arrowButtonRef.current &&
 				!arrowButtonRef.current.contains(target)
 			) {
-				setIsOpen(false);
+				setIsSidebarOpen(false);
 			}
 		};
 
 		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside);
-	}, [isOpen]);
+	}, [isSidebarOpen]);
 
-	const handleChange = (field: keyof ArticleStateType, value: any) => {
-		setFormState((prev) => ({ ...prev, [field]: value }));
+	const handleChange = (
+		field: keyof ArticleStateType,
+		value: ArticleStateType[typeof field]
+	) => {
+		setLocalArticleState((prev) => ({ ...prev, [field]: value }));
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		onApply(formState);
-		setIsOpen(false);
+		onApply(localArticleState);
+		setIsSidebarOpen(false);
 	};
 
 	const handleReset = () => {
-		setFormState(defaultArticleState);
+		setLocalArticleState(defaultArticleState);
 		onApply(defaultArticleState);
-		setIsOpen(false);
+		setIsSidebarOpen(false);
 	};
 
 	return (
 		<>
 			<div ref={arrowButtonRef}>
-				<ArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+				<ArrowButton
+					isOpen={isSidebarOpen}
+					onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+				/>
 			</div>
 			<aside
 				ref={asideRef}
-				className={clsx(styles.container, { [styles.container_open]: isOpen })}>
+				className={clsx(styles.container, {
+					[styles.container_open]: isSidebarOpen,
+				})}>
 				<form className={styles.form} onSubmit={handleSubmit}>
 					<Text as='h2' size={31} weight={800} uppercase>
 						Настройки
 					</Text>
-					<Separator />
 
 					<Select
 						title='Шрифт'
 						options={fontFamilyOptions}
-						selected={formState.fontFamilyOption}
+						selected={localArticleState.fontFamilyOption}
 						onChange={(option) => handleChange('fontFamilyOption', option)}
 					/>
 
 					<Select
 						title='Размер шрифта'
 						options={fontSizeOptions}
-						selected={formState.fontSizeOption}
+						selected={localArticleState.fontSizeOption}
 						onChange={(option) => handleChange('fontSizeOption', option)}
 					/>
 
 					<Select
 						title='Цвет шрифта'
 						options={fontColors}
-						selected={formState.fontColor}
+						selected={localArticleState.fontColor}
 						onChange={(option) => handleChange('fontColor', option)}
 					/>
+					<Separator />
 
 					<Select
 						title='Цвет фона'
 						options={backgroundColors}
-						selected={formState.backgroundColor}
+						selected={localArticleState.backgroundColor}
 						onChange={(option) => handleChange('backgroundColor', option)}
 					/>
 
 					<Select
 						title='Ширина контента'
 						options={contentWidthArr}
-						selected={formState.contentWidth}
+						selected={localArticleState.contentWidth}
 						onChange={(option) => handleChange('contentWidth', option)}
 					/>
 
